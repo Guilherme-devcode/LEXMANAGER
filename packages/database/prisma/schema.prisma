@@ -1,0 +1,383 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  SOCIO
+  ASSOCIADO
+  ESTAGIARIO
+  SECRETARIA
+  FINANCEIRO
+}
+
+enum ProcessoStatus {
+  ATIVO
+  SUSPENSO
+  ARQUIVADO
+  GANHO
+  PERDIDO
+}
+
+enum AreaDireito {
+  CIVEL
+  TRABALHISTA
+  CRIMINAL
+  TRIBUTARIO
+  FAMILIA
+  PREVIDENCIARIO
+  EMPRESARIAL
+  AMBIENTAL
+  CONSUMIDOR
+  ADMINISTRATIVO
+  IMOBILIARIO
+  OUTRO
+}
+
+enum ClienteStatus {
+  ATIVO
+  INATIVO
+  LEAD
+  PROSPECTO
+}
+
+enum ClienteTipo {
+  PF
+  PJ
+}
+
+enum LancamentoTipo {
+  RECEITA
+  DESPESA
+}
+
+enum LancamentoStatus {
+  PENDENTE
+  PAGO
+  CANCELADO
+}
+
+enum PrazoTipo {
+  FATAL
+  NORMAL
+  AUDIENCIA
+  PERICIA
+  REUNIAO
+  TAREFA
+}
+
+enum PrazoStatus {
+  PENDENTE
+  CONCLUIDO
+  PERDIDO
+  CANCELADO
+}
+
+enum NotificacaoStatus {
+  PENDENTE
+  ENVIADO
+  FALHOU
+}
+
+// ─────────────────────────────────────────────
+// Tenant (escritório/banca)
+// ─────────────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(cuid())
+  nome      String
+  cnpj      String?  @unique
+  email     String   @unique
+  telefone  String?
+  plano     String   @default("starter")
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      User[]
+  clientes   Cliente[]
+  processos  Processo[]
+  prazos     Prazo[]
+  lancamentos Lancamento[]
+  documentos Documento[]
+  auditLogs  AuditLog[]
+
+  @@map("tenants")
+}
+
+// ─────────────────────────────────────────────
+// User
+// ─────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  tenantId     String
+  nome         String
+  email        String
+  passwordHash String
+  role         UserRole  @default(ASSOCIADO)
+  ativo        Boolean   @default(true)
+  totpSecret   String?
+  totpEnabled  Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  refreshTokens  RefreshToken[]
+  processos      Processo[]      @relation("ProcessoResponsavel")
+  prazos         Prazo[]         @relation("PrazoResponsavel")
+  lancamentos    Lancamento[]    @relation("LancamentoCriador")
+  documentos     Documento[]
+  auditLogs      AuditLog[]
+
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// Auth
+// ─────────────────────────────────────────────
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revogado  Boolean  @default(false)
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// ─────────────────────────────────────────────
+// Cliente
+// ─────────────────────────────────────────────
+
+model Cliente {
+  id         String        @id @default(cuid())
+  tenantId   String
+  tipo       ClienteTipo
+  status     ClienteStatus @default(ATIVO)
+  nome       String
+  cpfCnpj    String?
+  email      String?
+  telefone   String?
+  celular    String?
+  endereco   Json?
+  observacoes String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  processos ProcessoCliente[]
+  lancamentos Lancamento[]
+
+  @@index([tenantId])
+  @@map("clientes")
+}
+
+// ─────────────────────────────────────────────
+// Processo
+// ─────────────────────────────────────────────
+
+model Processo {
+  id              String         @id @default(cuid())
+  tenantId        String
+  responsavelId   String
+  numeroCnj       String?
+  titulo          String
+  descricao       String?
+  status          ProcessoStatus @default(ATIVO)
+  area            AreaDireito
+  vara            String?
+  tribunal        String?
+  comarca         String?
+  instancia       String?
+  valorCausa      Decimal?       @db.Decimal(15, 2)
+  dataDistribuicao DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  responsavel  User              @relation("ProcessoResponsavel", fields: [responsavelId], references: [id])
+  clientes     ProcessoCliente[]
+  movimentacoes Movimentacao[]
+  prazos       Prazo[]
+  lancamentos  Lancamento[]
+  documentos   Documento[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([numeroCnj])
+  @@map("processos")
+}
+
+// Junction: Processo <-> Cliente
+model ProcessoCliente {
+  processoId String
+  clienteId  String
+  papel      String   @default("AUTOR") // AUTOR, REU, TERCEIRO, etc.
+  createdAt  DateTime @default(now())
+
+  processo Processo @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  cliente  Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@id([processoId, clienteId])
+  @@map("processo_clientes")
+}
+
+// ─────────────────────────────────────────────
+// Movimentação processual
+// ─────────────────────────────────────────────
+
+model Movimentacao {
+  id          String   @id @default(cuid())
+  processoId  String
+  titulo      String
+  descricao   String
+  dataMovimentacao DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  processo Processo @relation(fields: [processoId], references: [id], onDelete: Cascade)
+
+  @@index([processoId])
+  @@map("movimentacoes")
+}
+
+// ─────────────────────────────────────────────
+// Prazo
+// ─────────────────────────────────────────────
+
+model Prazo {
+  id             String      @id @default(cuid())
+  tenantId       String
+  processoId     String?
+  responsavelId  String
+  titulo         String
+  descricao      String?
+  tipo           PrazoTipo   @default(NORMAL)
+  status         PrazoStatus @default(PENDENTE)
+  dataVencimento DateTime
+  dataConclusao  DateTime?
+  alertas        Int[]       @default([1, 3, 7, 15])
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  processo      Processo?           @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  responsavel   User                @relation("PrazoResponsavel", fields: [responsavelId], references: [id])
+  notificacoes  PrazoNotificacao[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([dataVencimento])
+  @@map("prazos")
+}
+
+model PrazoNotificacao {
+  id         String            @id @default(cuid())
+  prazoId    String
+  diasAntes  Int
+  canal      String            @default("email")
+  status     NotificacaoStatus @default(PENDENTE)
+  enviadoEm  DateTime?
+  erro       String?
+  createdAt  DateTime          @default(now())
+
+  prazo Prazo @relation(fields: [prazoId], references: [id], onDelete: Cascade)
+
+  @@unique([prazoId, diasAntes, canal])
+  @@map("prazo_notificacoes")
+}
+
+// ─────────────────────────────────────────────
+// Financeiro
+// ─────────────────────────────────────────────
+
+model Lancamento {
+  id           String           @id @default(cuid())
+  tenantId     String
+  criadorId    String
+  processoId   String?
+  clienteId    String?
+  tipo         LancamentoTipo
+  status       LancamentoStatus @default(PENDENTE)
+  descricao    String
+  valor        Decimal          @db.Decimal(15, 2)
+  dataVencimento DateTime
+  dataPagamento  DateTime?
+  categoria    String?
+  observacoes  String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  criador   User      @relation("LancamentoCriador", fields: [criadorId], references: [id])
+  processo  Processo? @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  cliente   Cliente?  @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, tipo, status])
+  @@map("lancamentos")
+}
+
+// ─────────────────────────────────────────────
+// Documento
+// ─────────────────────────────────────────────
+
+model Documento {
+  id          String   @id @default(cuid())
+  tenantId    String
+  processoId  String?
+  uploaderId  String
+  nome        String
+  nomeOriginal String
+  mimeType    String
+  tamanho     Int
+  caminho     String
+  createdAt   DateTime @default(now())
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  processo  Processo? @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  uploader  User      @relation(fields: [uploaderId], references: [id])
+
+  @@index([tenantId])
+  @@index([processoId])
+  @@map("documentos")
+}
+
+// ─────────────────────────────────────────────
+// Audit Log
+// ─────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  tenantId   String
+  userId     String?
+  acao       String
+  entidade   String
+  entidadeId String?
+  dadosAntes Json?
+  dadosDepois Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, entidade])
+  @@map("audit_logs")
+}

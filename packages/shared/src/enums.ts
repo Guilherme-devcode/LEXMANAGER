@@ -1,0 +1,75 @@
+export enum UserRole {
+  SOCIO = 'SOCIO',
+  ASSOCIADO = 'ASSOCIADO',
+  ESTAGIARIO = 'ESTAGIARIO',
+  SECRETARIA = 'SECRETARIA',
+  FINANCEIRO = 'FINANCEIRO',
+}
+
+export enum ProcessoStatus {
+  ATIVO = 'ATIVO',
+  SUSPENSO = 'SUSPENSO',
+  ARQUIVADO = 'ARQUIVADO',
+  GANHO = 'GANHO',
+  PERDIDO = 'PERDIDO',
+}
+
+export enum AreaDireito {
+  CIVEL = 'CIVEL',
+  TRABALHISTA = 'TRABALHISTA',
+  CRIMINAL = 'CRIMINAL',
+  TRIBUTARIO = 'TRIBUTARIO',
+  FAMILIA = 'FAMILIA',
+  PREVIDENCIARIO = 'PREVIDENCIARIO',
+  EMPRESARIAL = 'EMPRESARIAL',
+  AMBIENTAL = 'AMBIENTAL',
+  CONSUMIDOR = 'CONSUMIDOR',
+  ADMINISTRATIVO = 'ADMINISTRATIVO',
+  IMOBILIARIO = 'IMOBILIARIO',
+  OUTRO = 'OUTRO',
+}
+
+export enum ClienteStatus {
+  ATIVO = 'ATIVO',
+  INATIVO = 'INATIVO',
+  LEAD = 'LEAD',
+  PROSPECTO = 'PROSPECTO',
+}
+
+export enum ClienteTipo {
+  PF = 'PF',
+  PJ = 'PJ',
+}
+
+export enum LancamentoTipo {
+  RECEITA = 'RECEITA',
+  DESPESA = 'DESPESA',
+}
+
+export enum LancamentoStatus {
+  PENDENTE = 'PENDENTE',
+  PAGO = 'PAGO',
+  CANCELADO = 'CANCELADO',
+}
+
+export enum PrazoTipo {
+  FATAL = 'FATAL',
+  NORMAL = 'NORMAL',
+  AUDIENCIA = 'AUDIENCIA',
+  PERICIA = 'PERICIA',
+  REUNIAO = 'REUNIAO',
+  TAREFA = 'TAREFA',
+}
+
+export enum PrazoStatus {
+  PENDENTE = 'PENDENTE',
+  CONCLUIDO = 'CONCLUIDO',
+  PERDIDO = 'PERDIDO',
+  CANCELADO = 'CANCELADO',
+}
+
+export enum NotificacaoStatus {
+  PENDENTE = 'PENDENTE',
+  ENVIADO = 'ENVIADO',
+  FALHOU = 'FALHOU',
+}
