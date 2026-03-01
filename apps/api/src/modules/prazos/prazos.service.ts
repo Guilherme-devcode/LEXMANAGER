@@ -13,7 +13,9 @@ export class PrazosService {
     page?: number;
     limit?: number;
   }) {
-    const { status, responsavelId, page = 1, limit = 20 } = query;
+    const { status, responsavelId } = query;
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;
 
     const where: any = { tenantId };
@@ -68,6 +70,18 @@ export class PrazosService {
     return prazo;
   }
 
+  async findOne(tenantId: string, id: string) {
+    const prazo = await this.prisma.prazo.findFirst({
+      where: { id, tenantId },
+      include: {
+        responsavel: { select: { id: true, nome: true, email: true } },
+        processo: { select: { id: true, titulo: true, numeroCnj: true } },
+      },
+    });
+    if (!prazo) throw new NotFoundException('Prazo não encontrado');
+    return prazo;
+  }
+
   async update(tenantId: string, id: string, dto: UpdatePrazoDto) {
     const prazo = await this.prisma.prazo.findFirst({ where: { id, tenantId } });
     if (!prazo) throw new NotFoundException('Prazo não encontrado');
@@ -76,7 +90,31 @@ export class PrazosService {
     if (dto.dataVencimento) data.dataVencimento = new Date(dto.dataVencimento);
     if (dto.dataConclusao) data.dataConclusao = new Date(dto.dataConclusao);
 
-    return this.prisma.prazo.update({ where: { id }, data });
+    const updated = await this.prisma.prazo.update({ where: { id }, data });
+
+    // Sync notification records when alertas change
+    if (dto.alertas) {
+      await this.prisma.prazoNotificacao.deleteMany({
+        where: { prazoId: id, status: 'PENDENTE' },
+      });
+      await this.prisma.prazoNotificacao.createMany({
+        data: dto.alertas.map((diasAntes) => ({
+          prazoId: id,
+          diasAntes,
+          canal: 'email',
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    return updated;
+  }
+
+  async remove(tenantId: string, id: string) {
+    const prazo = await this.prisma.prazo.findFirst({ where: { id, tenantId } });
+    if (!prazo) throw new NotFoundException('Prazo não encontrado');
+    await this.prisma.prazo.delete({ where: { id } });
+    return { message: 'Prazo excluído com sucesso' };
   }
 
   async findPrazosDue(daysAhead: number) {

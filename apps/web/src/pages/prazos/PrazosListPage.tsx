@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { prazosService } from '@/services/prazos.service';
 import { DataTable, Column } from '@/components/ui/DataTable';
-import { Plus, CheckCircle, Search } from 'lucide-react';
+import { Plus, CheckCircle, Pencil, Trash2 } from 'lucide-react';
 import { PrazoDto, PrazoStatus, PrazoTipo } from '@lexmanager/shared';
 import { format, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -21,7 +21,7 @@ const tipoColors: Record<PrazoTipo, string> = {
 export default function PrazosListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [status, setStatus] = useState<PrazoStatus | ''>('PENDENTE');
+  const [status, setStatus] = useState<PrazoStatus | ''>(PrazoStatus.PENDENTE);
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
@@ -32,6 +32,11 @@ export default function PrazosListPage() {
   const concluirMutation = useMutation({
     mutationFn: (id: string) =>
       prazosService.update(id, { status: PrazoStatus.CONCLUIDO, dataConclusao: new Date().toISOString() }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['prazos'] }),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: prazosService.remove,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['prazos'] }),
   });
 
@@ -78,17 +83,35 @@ export default function PrazosListPage() {
     {
       key: 'actions' as any,
       label: '',
-      className: 'w-16',
+      className: 'w-28',
       render: (p) => (
-        p.status === PrazoStatus.PENDENTE ? (
+        <div className="flex items-center gap-1">
+          {p.status === PrazoStatus.PENDENTE && (
+            <button
+              onClick={() => concluirMutation.mutate(p.id)}
+              title="Marcar como concluído"
+              className="rounded p-1 text-gray-400 hover:bg-emerald-100 hover:text-emerald-600"
+            >
+              <CheckCircle className="h-4 w-4" />
+            </button>
+          )}
           <button
-            onClick={() => concluirMutation.mutate(p.id)}
-            title="Marcar como concluído"
-            className="rounded p-1 text-gray-400 hover:bg-emerald-100 hover:text-emerald-600"
+            onClick={() => navigate(`/prazos/${p.id}/editar`)}
+            title="Editar"
+            className="rounded p-1 text-gray-400 hover:bg-blue-100 hover:text-blue-600"
           >
-            <CheckCircle className="h-4 w-4" />
+            <Pencil className="h-4 w-4" />
           </button>
-        ) : null
+          <button
+            onClick={() => {
+              if (confirm('Excluir este prazo?')) removeMutation.mutate(p.id);
+            }}
+            title="Excluir"
+            className="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       ),
     },
   ];

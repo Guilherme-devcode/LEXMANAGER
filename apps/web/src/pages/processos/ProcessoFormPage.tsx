@@ -123,7 +123,7 @@ export default function ProcessoFormPage() {
             </div>
             <div>
               <label className="form-label">Valor da Causa (R$)</label>
-              <input className="form-input" type="number" min="0" step="0.01" {...field('valorCausa', 'number')} />
+              <input className="form-input" min="0" step="0.01" {...field('valorCausa', 'number')} />
             </div>
           </div>
 
@@ -148,7 +148,7 @@ export default function ProcessoFormPage() {
 
           <div>
             <label className="form-label">Data de Distribuição</label>
-            <input className="form-input" type="date" {...field('dataDistribuicao', 'date')} />
+            <input className="form-input" {...field('dataDistribuicao', 'date')} />
           </div>
 
           <div>

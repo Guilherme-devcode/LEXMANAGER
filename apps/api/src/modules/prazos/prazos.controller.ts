@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { PrazosService } from './prazos.service';
 import { CreatePrazoDto, UpdatePrazoDto } from './dto/prazo.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -30,6 +30,11 @@ export class PrazosController {
     return this.prazosService.create(tenantId, userId, dto);
   }
 
+  @Get(':id')
+  findOne(@CurrentUser('tenantId') tenantId: string, @Param('id') id: string) {
+    return this.prazosService.findOne(tenantId, id);
+  }
+
   @Patch(':id')
   update(
     @CurrentUser('tenantId') tenantId: string,
@@ -37,5 +42,10 @@ export class PrazosController {
     @Body() dto: UpdatePrazoDto,
   ) {
     return this.prazosService.update(tenantId, id, dto);
+  }
+
+  @Delete(':id')
+  remove(@CurrentUser('tenantId') tenantId: string, @Param('id') id: string) {
+    return this.prazosService.remove(tenantId, id);
   }
 }

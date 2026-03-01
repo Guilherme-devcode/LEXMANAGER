@@ -21,4 +21,9 @@ export const financeiroService = {
     const { data } = await api.patch<LancamentoDto>(`/financeiro/lancamentos/${id}/pagar`);
     return data;
   },
+
+  async cancelar(id: string) {
+    const { data } = await api.delete<LancamentoDto>(`/financeiro/lancamentos/${id}`);
+    return data;
+  },
 };

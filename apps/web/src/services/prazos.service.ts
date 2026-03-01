@@ -7,6 +7,11 @@ export const prazosService = {
     return data;
   },
 
+  async get(id: string) {
+    const { data } = await api.get<PrazoDto>(`/prazos/${id}`);
+    return data;
+  },
+
   async create(payload: Partial<PrazoDto> & { dataVencimento: string }) {
     const { data } = await api.post<PrazoDto>('/prazos', payload);
     return data;
@@ -15,5 +20,9 @@ export const prazosService = {
   async update(id: string, payload: Partial<PrazoDto>) {
     const { data } = await api.patch<PrazoDto>(`/prazos/${id}`, payload);
     return data;
+  },
+
+  async remove(id: string) {
+    await api.delete(`/prazos/${id}`);
   },
 };
