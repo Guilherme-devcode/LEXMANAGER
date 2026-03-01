@@ -23,14 +23,14 @@ interface DataTableProps<T> {
   emptyMessage?: string;
 }
 
-function SkeletonRow({ cols }: { cols: number }) {
+function SkRow({ cols }: { cols: number }) {
   return (
     <tr>
       {Array.from({ length: cols }).map((_, i) => (
-        <td key={i} className="px-4 py-3.5">
+        <td key={i} style={{ padding: '13px 16px', borderBottom: '1px solid var(--border)' }}>
           <div
-            className="h-3.5 rounded animate-pulse"
-            style={{ background: 'var(--bg-overlay)', width: `${55 + (i * 17) % 35}%` }}
+            className="h-3.5 rounded-full animate-pulse"
+            style={{ background: 'var(--border)', width: `${50 + (i * 19) % 40}%` }}
           />
         </td>
       ))}
@@ -48,70 +48,39 @@ export function DataTable<T extends { id: string }>({
 }: DataTableProps<T>) {
   return (
     <div>
-      {/* Table wrapper */}
+      {/* Table */}
       <div
         className="overflow-x-auto rounded-xl"
-        style={{ border: '1px solid var(--border-soft)' }}
+        style={{ border: '1px solid var(--border)', background: 'var(--bg-card)' }}
       >
         <table className="min-w-full lex-table">
           <thead>
             <tr>
               {columns.map((col) => (
-                <th
-                  key={String(col.key)}
-                  className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest ${col.className || ''}`}
-                  style={{
-                    color: 'var(--text-muted)',
-                    background: 'var(--bg-surface)',
-                    letterSpacing: '0.08em',
-                  }}
-                >
+                <th key={String(col.key)} className={col.className}>
                   {col.label}
                 </th>
               ))}
             </tr>
           </thead>
-
-          <tbody style={{ background: 'var(--bg-raised)' }}>
+          <tbody>
             {isLoading ? (
-              <>
-                <SkeletonRow cols={columns.length} />
-                <SkeletonRow cols={columns.length} />
-                <SkeletonRow cols={columns.length} />
-                <SkeletonRow cols={columns.length} />
-                <SkeletonRow cols={columns.length} />
-              </>
+              Array.from({ length: 5 }).map((_, i) => <SkRow key={i} cols={columns.length} />)
             ) : data.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="py-16 text-center text-sm"
-                  style={{ color: 'var(--text-muted)' }}
+                  style={{ padding: '64px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}
                 >
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
               data.map((item) => (
-                <tr
-                  key={item.id}
-                  style={{ cursor: 'default' }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(201,168,76,0.025)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = 'transparent';
-                  }}
-                >
+                <tr key={item.id}>
                   {columns.map((col) => (
-                    <td
-                      key={String(col.key)}
-                      className={`px-4 py-3.5 text-sm ${col.className || ''}`}
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {col.render
-                        ? col.render(item)
-                        : String((item as any)[col.key] ?? '')}
+                    <td key={String(col.key)} className={col.className}>
+                      {col.render ? col.render(item) : String((item as any)[col.key] ?? '')}
                     </td>
                   ))}
                 </tr>
@@ -123,42 +92,43 @@ export function DataTable<T extends { id: string }>({
 
       {/* Pagination */}
       {meta && meta.totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex items-center justify-between flex-wrap gap-3">
           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
             Mostrando{' '}
-            <span style={{ color: 'var(--text-secondary)' }}>
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
               {(meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.total)}
             </span>{' '}
             de{' '}
-            <span style={{ color: 'var(--text-secondary)' }}>{meta.total}</span>{' '}
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{meta.total}</span>{' '}
             registros
           </p>
 
           <div className="flex items-center gap-1">
-            <PaginationBtn onClick={() => onPageChange?.(1)} disabled={meta.page === 1}>
+            <PagBtn onClick={() => onPageChange?.(1)} disabled={meta.page === 1}>
               <ChevronsLeft className="h-3.5 w-3.5" />
-            </PaginationBtn>
-            <PaginationBtn onClick={() => onPageChange?.(meta.page - 1)} disabled={meta.page === 1}>
+            </PagBtn>
+            <PagBtn onClick={() => onPageChange?.(meta.page - 1)} disabled={meta.page === 1}>
               <ChevronLeft className="h-3.5 w-3.5" />
-            </PaginationBtn>
+            </PagBtn>
 
             <span
               className="px-3 py-1.5 text-xs font-semibold rounded-lg"
               style={{
-                color: 'var(--gold-400)',
-                background: 'rgba(201,168,76,0.08)',
-                border: '1px solid rgba(201,168,76,0.15)',
+                color: 'var(--accent)',
+                background: 'var(--accent-light)',
+                border: '1px solid var(--accent)',
+                borderOpacity: '0.3',
               }}
             >
               {meta.page} / {meta.totalPages}
             </span>
 
-            <PaginationBtn onClick={() => onPageChange?.(meta.page + 1)} disabled={meta.page === meta.totalPages}>
+            <PagBtn onClick={() => onPageChange?.(meta.page + 1)} disabled={meta.page === meta.totalPages}>
               <ChevronRight className="h-3.5 w-3.5" />
-            </PaginationBtn>
-            <PaginationBtn onClick={() => onPageChange?.(meta.totalPages)} disabled={meta.page === meta.totalPages}>
+            </PagBtn>
+            <PagBtn onClick={() => onPageChange?.(meta.totalPages)} disabled={meta.page === meta.totalPages}>
               <ChevronsRight className="h-3.5 w-3.5" />
-            </PaginationBtn>
+            </PagBtn>
           </div>
         </div>
       )}
@@ -166,14 +136,8 @@ export function DataTable<T extends { id: string }>({
   );
 }
 
-function PaginationBtn({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
+function PagBtn({ children, onClick, disabled }: {
+  children: React.ReactNode; onClick?: () => void; disabled?: boolean;
 }) {
   return (
     <button
@@ -183,8 +147,8 @@ function PaginationBtn({
       style={{ color: 'var(--text-muted)' }}
       onMouseEnter={(e) => {
         if (!disabled) {
-          (e.currentTarget as HTMLElement).style.background = 'rgba(201,168,76,0.08)';
-          (e.currentTarget as HTMLElement).style.color = 'var(--gold-400)';
+          (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)';
+          (e.currentTarget as HTMLElement).style.color = 'var(--accent)';
         }
       }}
       onMouseLeave={(e) => {

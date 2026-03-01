@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import { PrivateRoute } from '@/router/PrivateRoute';
 import AppLayout from '@/components/layout/AppLayout';
 import LoginPage from '@/pages/auth/LoginPage';
@@ -42,9 +43,9 @@ export default function App() {
             <Route path="/documentos" element={<DocumentosPage />} />
             <Route path="/usuarios" element={<UsersPage />} />
           </Route>
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AuthProvider>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

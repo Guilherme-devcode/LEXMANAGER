@@ -1,13 +1,7 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Scale,
-  Users,
-  Calendar,
-  DollarSign,
-  FileText,
-  UserCog,
-  X,
+  LayoutDashboard, Scale, Users, Calendar,
+  DollarSign, FileText, UserCog, X, LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@lexmanager/shared';
@@ -23,23 +17,14 @@ const navItems = [
   { to: '/processos',  icon: Scale,           label: 'Processos' },
   { to: '/clientes',   icon: Users,           label: 'Clientes' },
   { to: '/prazos',     icon: Calendar,        label: 'Prazos' },
-  {
-    to: '/financeiro',
-    icon: DollarSign,
-    label: 'Financeiro',
-    roles: [UserRole.SOCIO, UserRole.FINANCEIRO],
-  },
-  { to: '/documentos', icon: FileText, label: 'Documentos' },
-  {
-    to: '/usuarios',
-    icon: UserCog,
-    label: 'Usuários',
-    roles: [UserRole.SOCIO],
-  },
+  { to: '/financeiro', icon: DollarSign,      label: 'Financeiro', roles: [UserRole.SOCIO, UserRole.FINANCEIRO] },
+  { to: '/documentos', icon: FileText,        label: 'Documentos' },
+  { to: '/usuarios',   icon: UserCog,         label: 'Usuários',   roles: [UserRole.SOCIO] },
 ];
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const visibleItems = navItems.filter(
     (item) => !item.roles || item.roles.includes(user?.role as UserRole),
@@ -49,13 +34,19 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     ? user.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
     : '?';
 
+  const handleLogout = async () => {
+    onClose();
+    try { await logout(); } catch {}
+    navigate('/login');
+  };
+
   return (
     <>
       {/* Mobile overlay */}
       {open && (
         <div
           className="fixed inset-0 z-40 lg:hidden"
-          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+          style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
           onClick={onClose}
         />
       )}
@@ -63,51 +54,62 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed inset-y-0 left-0 z-50 flex w-60 flex-col transition-transform duration-300 lg:relative lg:translate-x-0',
-          open ? 'translate-x-0' : '-translate-x-full',
+          'fixed inset-y-0 left-0 z-50 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0',
+          /* Desktop: narrow icon rail */
+          'lg:w-[68px]',
+          /* Mobile: full slide-in drawer */
+          open ? 'translate-x-0 w-60' : '-translate-x-full w-60',
         )}
         style={{
-          background: 'var(--bg-surface)',
-          borderRight: '1px solid var(--border-soft)',
+          background: 'var(--bg-sidebar)',
+          borderRight: '1.5px solid var(--border)',
         }}
       >
-        {/* Right edge gradient line */}
-        <div
-          className="absolute inset-y-0 right-0 w-px pointer-events-none"
-          style={{
-            background: 'linear-gradient(to bottom, transparent 0%, rgba(201,168,76,0.25) 30%, rgba(201,168,76,0.15) 70%, transparent 100%)',
-          }}
-        />
-
         {/* Logo */}
         <div
-          className="flex h-16 items-center justify-between px-5"
-          style={{ borderBottom: '1px solid var(--border-soft)' }}
+          className="h-16 flex items-center justify-between px-3 lg:justify-center"
+          style={{ borderBottom: '1px solid var(--border)' }}
         >
-          <div className="flex items-center gap-2.5">
-            <SidebarLogo />
-            <span className="font-display text-base font-semibold text-gold-shimmer select-none">
-              LexManager
+          {/* Mobile: logo + name */}
+          <div className="flex lg:hidden items-center gap-2.5">
+            <LogoMark />
+            <span className="font-display font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+              LexManager Pro
             </span>
           </div>
+          {/* Desktop: logo mark only */}
+          <div className="hidden lg:flex">
+            <LogoMark />
+          </div>
+          {/* Mobile close button */}
           <button
             onClick={onClose}
-            className="rounded-lg p-1 transition-colors lg:hidden"
+            className="lg:hidden rounded-lg p-1.5 transition-colors"
             style={{ color: 'var(--text-muted)' }}
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2">
-          <p
-            className="px-3 mb-2 text-xs font-semibold uppercase tracking-widest"
-            style={{ color: 'var(--text-muted)', letterSpacing: '0.1em' }}
-          >
-            Menu
-          </p>
-          <ul className="space-y-0.5">
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2">
+          {/* Desktop: icons only */}
+          <ul className="hidden lg:flex flex-col items-center gap-1">
+            {visibleItems.map((item) => (
+              <li key={item.to} className="flex justify-center w-full">
+                <NavLink
+                  to={item.to}
+                  className={({ isActive }) => clsx('nav-link', isActive && 'active')}
+                >
+                  <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
+                  <span className="nav-tip">{item.label}</span>
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+
+          {/* Mobile: icons + labels */}
+          <ul className="lg:hidden flex flex-col gap-0.5">
             {visibleItems.map((item) => (
               <li key={item.to}>
                 <NavLink
@@ -115,14 +117,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                   onClick={onClose}
                   className={({ isActive }) =>
                     clsx(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 relative',
-                      isActive
-                        ? 'nav-active'
-                        : 'hover:bg-white/5',
+                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150',
+                      !isActive && 'hover:bg-[var(--bg-hover)]',
                     )
                   }
                   style={({ isActive }) => ({
-                    color: isActive ? 'var(--gold-400)' : 'var(--text-secondary)',
+                    background: isActive ? 'var(--accent-light)' : undefined,
+                    color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+                    fontWeight: isActive ? '600' : undefined,
                   })}
                 >
                   <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -133,32 +135,65 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           </ul>
         </nav>
 
-        {/* User info */}
+        {/* Bottom: avatar + logout */}
         <div
-          className="p-4"
-          style={{ borderTop: '1px solid var(--border-soft)' }}
+          className="flex flex-col items-center gap-2 p-3"
+          style={{ borderTop: '1px solid var(--border)' }}
         >
-          <div className="flex items-center gap-3 rounded-lg px-2 py-2">
-            {/* Avatar */}
+          {/* Desktop: stacked icons */}
+          <div className="hidden lg:flex flex-col items-center gap-2">
             <div
-              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold"
               style={{
-                background: 'linear-gradient(135deg, rgba(201,168,76,0.25), rgba(201,168,76,0.1))',
-                border: '1px solid rgba(201,168,76,0.4)',
-                color: 'var(--gold-400)',
-                boxShadow: '0 0 10px rgba(201,168,76,0.15)',
+                background: 'var(--accent-light)',
+                color: 'var(--accent)',
+                border: '1.5px solid var(--accent)',
               }}
+              title={user?.nome}
             >
               {initials}
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                {user?.nome}
-              </p>
-              <p className="truncate text-xs" style={{ color: 'var(--text-muted)' }}>
-                {user?.role}
-              </p>
+            <button onClick={handleLogout} className="nav-link" title="Sair">
+              <LogOut className="h-[18px] w-[18px]" />
+              <span className="nav-tip">Sair</span>
+            </button>
+          </div>
+
+          {/* Mobile: user row + logout button */}
+          <div className="lg:hidden w-full space-y-1">
+            <div
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl"
+              style={{ background: 'var(--bg-hover)' }}
+            >
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                style={{
+                  background: 'var(--accent-light)',
+                  color: 'var(--accent)',
+                  border: '1.5px solid var(--accent)',
+                }}
+              >
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                  {user?.nome}
+                </p>
+                <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                  {user?.role}
+                </p>
+              </div>
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style={{ color: 'var(--danger)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--danger-bg)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+            >
+              <LogOut className="h-4 w-4" />
+              Sair da conta
+            </button>
           </div>
         </div>
       </aside>
@@ -166,18 +201,16 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   );
 }
 
-function SidebarLogo() {
+function LogoMark() {
   return (
-    <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="16" cy="16" r="13" stroke="url(#sg)" strokeWidth="1.5" />
-      <path d="M10 16h12M16 10v12" stroke="url(#sg)" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M11 13l10 6M21 13l-10 6" stroke="url(#sg)" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-      <defs>
-        <linearGradient id="sg" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#e8c64a" />
-          <stop offset="1" stopColor="#a8893c" />
-        </linearGradient>
-      </defs>
-    </svg>
+    <div
+      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+      style={{ background: 'var(--accent)' }}
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M5 10h10M10 5v10" stroke="white" strokeWidth="2" strokeLinecap="round" />
+        <path d="M6 7.5l8 5M14 7.5l-8 5" stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+      </svg>
+    </div>
   );
 }

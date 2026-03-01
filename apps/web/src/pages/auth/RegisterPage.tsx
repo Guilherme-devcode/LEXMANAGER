@@ -1,21 +1,18 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { AlertCircle, ArrowRight, Building2, User } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
+import { AlertCircle, ArrowRight, Building2, User, Scale, Sun, Moon } from 'lucide-react';
 
 export default function RegisterPage() {
   const { registerTenant } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const [form, setForm] = useState({
-    nomeTenant: '',
-    emailTenant: '',
-    nomeUsuario: '',
-    emailUsuario: '',
-    senha: '',
-    cnpj: '',
+    nomeTenant: '', emailTenant: '', nomeUsuario: '', emailUsuario: '', senha: '', cnpj: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,68 +44,67 @@ export default function RegisterPage() {
   });
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-8 relative mesh-bg"
-    >
-      {/* Background orbs */}
-      <div
-        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full opacity-50"
-        style={{ background: 'radial-gradient(ellipse, rgba(201,168,76,0.06) 0%, transparent 70%)' }}
-      />
+    <div className="min-h-screen flex items-center justify-center p-6 sm:p-10 relative" style={{ background: 'var(--bg-page)' }}>
+      {/* Theme toggle */}
+      <button
+        onClick={toggleTheme}
+        className="absolute top-5 right-5 icon-btn"
+        title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+      >
+        {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </button>
 
-      <div className="w-full max-w-xl relative z-10">
+      <div className="w-full max-w-lg animate-fade-up">
         {/* Logo */}
-        <div className="flex items-center gap-2.5 mb-10 animate-fade-up">
-          <LexLogoSmall />
-          <span className="font-display text-lg font-semibold text-gold">LexManager Pro</span>
+        <div className="flex items-center gap-2.5 mb-8">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
+            <Scale className="h-4 w-4 text-white" />
+          </div>
+          <span className="font-display font-bold text-base" style={{ color: 'var(--text-primary)' }}>LexManager Pro</span>
         </div>
 
-        <div className="animate-fade-up anim-delay-75 mb-6">
-          <h1 className="font-display text-4xl font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
-            Criar escritório
+        {/* Heading */}
+        <div className="mb-6">
+          <h1 className="font-display font-bold text-2xl sm:text-3xl mb-1.5" style={{ color: 'var(--text-primary)' }}>
+            Criar seu escritório
           </h1>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             Já tem conta?{' '}
-            <Link to="/login" className="hover:underline" style={{ color: 'var(--gold-400)' }}>
-              Entrar
-            </Link>
+            <Link to="/login" className="font-semibold hover:underline" style={{ color: 'var(--accent)' }}>Entrar</Link>
           </p>
         </div>
 
+        {/* Error */}
         {error && (
           <div
-            className="mb-5 flex items-start gap-2.5 rounded-lg px-4 py-3 text-sm animate-scale-in"
-            style={{
-              background: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.2)',
-              color: '#fca5a5',
-            }}
+            className="mb-5 flex items-start gap-2.5 rounded-xl px-4 py-3 text-sm animate-scale-in"
+            style={{ background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid rgba(239,68,68,0.2)' }}
           >
-            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5 text-red-400" />
+            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5 animate-fade-up anim-delay-150">
-
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Section: Escritório */}
           <div className="card p-5 space-y-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Building2 className="h-4 w-4" style={{ color: 'var(--gold-500)' }} />
-              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex items-center gap-2 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
+                <Building2 className="h-3.5 w-3.5" style={{ color: 'var(--accent)' }} />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
                 Dados do Escritório
               </span>
             </div>
-            <div className="h-px" style={{ background: 'var(--border-soft)' }} />
 
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className="form-label">Nome do escritório *</label>
-                <input type="text" className="form-input" required {...field('nomeTenant')} placeholder="Escritório Jurídico Silva & Associados" />
+                <input type="text" className="form-input" required placeholder="Silva & Associados" {...field('nomeTenant')} />
               </div>
               <div>
                 <label className="form-label">Email institucional *</label>
-                <input type="email" className="form-input" required {...field('emailTenant')} placeholder="contato@escritorio.com" />
+                <input type="email" className="form-input" required placeholder="contato@escritorio.com" {...field('emailTenant')} />
               </div>
               <div>
                 <label className="form-label">CNPJ</label>
@@ -119,68 +115,49 @@ export default function RegisterPage() {
 
           {/* Section: Sócio */}
           <div className="card p-5 space-y-4">
-            <div className="flex items-center gap-2 mb-1">
-              <User className="h-4 w-4" style={{ color: 'var(--gold-500)' }} />
-              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex items-center gap-2 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
+                <User className="h-3.5 w-3.5" style={{ color: 'var(--accent)' }} />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
                 Sócio Administrador
               </span>
             </div>
-            <div className="h-px" style={{ background: 'var(--border-soft)' }} />
 
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className="form-label">Nome completo *</label>
-                <input type="text" className="form-input" required {...field('nomeUsuario')} placeholder="Dr. João da Silva" />
+                <input type="text" className="form-input" required placeholder="Dr. João da Silva" {...field('nomeUsuario')} />
               </div>
               <div>
                 <label className="form-label">Email *</label>
-                <input type="email" className="form-input" required {...field('emailUsuario')} placeholder="joao@escritorio.com" />
+                <input type="email" className="form-input" required placeholder="joao@escritorio.com" {...field('emailUsuario')} />
               </div>
               <div>
                 <label className="form-label">Senha *</label>
-                <input type="password" className="form-input" required minLength={8} {...field('senha')} placeholder="••••••••" />
+                <input type="password" className="form-input" required minLength={8} placeholder="Mín. 8 caracteres" {...field('senha')} />
               </div>
             </div>
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Mínimo 8 caracteres, com letras maiúsculas, minúsculas e números.
+              A senha deve ter ao menos 8 caracteres, incluindo maiúscula, minúscula e número.
             </p>
           </div>
 
           <button type="submit" disabled={isLoading} className="btn-primary w-full group">
             {isLoading ? (
               <>
-                <span className="h-4 w-4 rounded-full border-2 border-ink-900/40 border-t-ink-900 animate-spin" />
-                <span>Criando escritório...</span>
+                <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                Criando escritório...
               </>
             ) : (
               <>
-                <span>Criar escritório</span>
+                Criar escritório
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </>
             )}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-xs animate-fade-up anim-delay-300" style={{ color: 'var(--text-muted)' }}>
-          Ao criar, você concorda com nossos Termos de Uso e Política de Privacidade.
-        </p>
       </div>
     </div>
-  );
-}
-
-function LexLogoSmall() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="16" cy="16" r="14" stroke="url(#rg)" strokeWidth="1.5" />
-      <path d="M10 16h12M16 10v12" stroke="url(#rg)" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M11 13l10 6M21 13l-10 6" stroke="url(#rg)" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-      <defs>
-        <linearGradient id="rg" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#e8c64a" />
-          <stop offset="1" stopColor="#a8893c" />
-        </linearGradient>
-      </defs>
-    </svg>
   );
 }
