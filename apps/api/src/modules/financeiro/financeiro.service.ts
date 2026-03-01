@@ -13,7 +13,9 @@ export class FinanceiroService {
     page?: number;
     limit?: number;
   }) {
-    const { tipo, status, page = 1, limit = 20 } = query;
+    const { tipo, status } = query;
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;
 
     const where: any = { tenantId };
@@ -75,6 +77,16 @@ export class FinanceiroService {
     return this.prisma.lancamento.update({
       where: { id },
       data: { status: 'PAGO', dataPagamento: new Date() },
+    });
+  }
+
+  async cancelar(tenantId: string, id: string) {
+    const lancamento = await this.prisma.lancamento.findFirst({ where: { id, tenantId } });
+    if (!lancamento) throw new NotFoundException('Lançamento não encontrado');
+
+    return this.prisma.lancamento.update({
+      where: { id },
+      data: { status: 'CANCELADO' },
     });
   }
 }
