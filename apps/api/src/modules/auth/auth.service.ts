@@ -70,11 +70,11 @@ export class AuthService {
     return this.generateTokens(user, user.tenantId, ipAddress, userAgent);
   }
 
-  async refresh(userId: string, tenantId: string, rawToken: string) {
+  async refresh(rawToken: string) {
     const tokenHash = this.hashToken(rawToken);
 
     const stored = await this.prisma.refreshToken.findFirst({
-      where: { tokenHash, userId, revogado: false },
+      where: { tokenHash, revogado: false },
       include: { user: true },
     });
 
@@ -88,7 +88,7 @@ export class AuthService {
       data: { revogado: true },
     });
 
-    return this.generateTokens(stored.user, tenantId);
+    return this.generateTokens(stored.user, stored.user.tenantId);
   }
 
   async logout(userId: string) {

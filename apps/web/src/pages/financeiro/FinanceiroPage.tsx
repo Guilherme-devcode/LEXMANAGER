@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { financeiroService } from '@/services/financeiro.service';
 import { DataTable, Column } from '@/components/ui/DataTable';
-import { Plus, CheckCircle } from 'lucide-react';
+import { Plus, CheckCircle, XCircle } from 'lucide-react';
 import { LancamentoDto, LancamentoTipo, LancamentoStatus } from '@lexmanager/shared';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -19,7 +19,7 @@ export default function FinanceiroPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [tipo, setTipo] = useState<LancamentoTipo | ''>('');
-  const [status, setStatus] = useState<LancamentoStatus | ''>('PENDENTE');
+  const [status, setStatus] = useState<LancamentoStatus | ''>(LancamentoStatus.PENDENTE);
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
@@ -30,6 +30,11 @@ export default function FinanceiroPage() {
 
   const pagarMutation = useMutation({
     mutationFn: financeiroService.pagar,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lancamentos'] }),
+  });
+
+  const cancelarMutation = useMutation({
+    mutationFn: financeiroService.cancelar,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lancamentos'] }),
   });
 
@@ -76,16 +81,27 @@ export default function FinanceiroPage() {
     {
       key: 'actions' as any,
       label: '',
-      className: 'w-16',
+      className: 'w-20',
       render: (l) =>
         l.status === LancamentoStatus.PENDENTE ? (
-          <button
-            onClick={() => pagarMutation.mutate(l.id)}
-            title="Marcar como pago"
-            className="rounded p-1 text-gray-400 hover:bg-emerald-100 hover:text-emerald-600"
-          >
-            <CheckCircle className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => pagarMutation.mutate(l.id)}
+              title="Marcar como pago"
+              className="rounded p-1 text-gray-400 hover:bg-emerald-100 hover:text-emerald-600"
+            >
+              <CheckCircle className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => {
+                if (confirm('Cancelar este lançamento?')) cancelarMutation.mutate(l.id);
+              }}
+              title="Cancelar"
+              className="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600"
+            >
+              <XCircle className="h-4 w-4" />
+            </button>
+          </div>
         ) : null,
     },
   ];

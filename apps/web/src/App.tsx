@@ -36,6 +36,7 @@ export default function App() {
             <Route path="/clientes/:id/editar" element={<ClienteFormPage />} />
             <Route path="/prazos" element={<PrazosListPage />} />
             <Route path="/prazos/novo" element={<PrazoFormPage />} />
+            <Route path="/prazos/:id/editar" element={<PrazoFormPage />} />
             <Route path="/financeiro" element={<FinanceiroPage />} />
             <Route path="/financeiro/novo" element={<LancamentoFormPage />} />
             <Route path="/documentos" element={<DocumentosPage />} />

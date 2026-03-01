@@ -28,4 +28,9 @@ export class UpdatePrazoDto {
   @IsOptional() @IsDateString() dataVencimento?: string;
   @IsOptional() @IsString() descricao?: string;
   @IsOptional() @IsDateString() dataConclusao?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsNumber({}, { each: true })
+  alertas?: number[];
 }

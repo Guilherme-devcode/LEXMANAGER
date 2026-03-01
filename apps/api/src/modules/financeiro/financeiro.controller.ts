@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { FinanceiroService } from './financeiro.service';
 import { CreateLancamentoDto, UpdateLancamentoDto } from './dto/lancamento.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -45,5 +45,10 @@ export class FinanceiroController {
   @Patch('lancamentos/:id/pagar')
   pagar(@CurrentUser('tenantId') tenantId: string, @Param('id') id: string) {
     return this.financeiroService.pagar(tenantId, id);
+  }
+
+  @Delete('lancamentos/:id')
+  cancelar(@CurrentUser('tenantId') tenantId: string, @Param('id') id: string) {
+    return this.financeiroService.cancelar(tenantId, id);
   }
 }

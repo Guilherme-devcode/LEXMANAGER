@@ -55,15 +55,7 @@ export class AuthController {
       return;
     }
 
-    // Extract user info from the token without strict validation (service validates)
-    const jwt = require('jsonwebtoken');
-    const decoded = jwt.decode(refreshToken) as any;
-    if (!decoded?.sub) {
-      res.status(HttpStatus.UNAUTHORIZED).json({ message: 'Token inválido' });
-      return;
-    }
-
-    const tokens = await this.authService.refresh(decoded.sub, decoded.tenantId, refreshToken);
+    const tokens = await this.authService.refresh(refreshToken);
     this.setRefreshCookie(res, tokens.refreshToken);
     return { accessToken: tokens.accessToken };
   }
